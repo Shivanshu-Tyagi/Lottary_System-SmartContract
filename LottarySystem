@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.0;
+
+contract lottary {
+    
+    address public manager;
+    address[] public members;
+
+    constructor() {
+        manager = msg.sender;
+    }
+
+    function alreadyExist() private view returns (bool) {
+        for (uint i =0;i< members.length; i++) 
+        {
+            if (members[i]==msg.sender) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    function addMember() payable public {
+        require(msg.sender != manager , "Manager can't enter");
+        require(alreadyExist() == false , "already present ");
+        require(msg.value >= 1 ether , "Minimum amount should be added");
+        members.push(payable (msg.sender));
+    }
+
+    function random() private view returns(uint)  {
+        return  uint(keccak256(abi.encode(block.difficulty,block.number,members)));
+    }
+
+    function pickWinner() public  {
+        require(msg.sender == manager , "Only manager can pickup the winner");
+        uint index = random()%members.length;
+        address contractAddress = address(this);
+        address payable winner = payable(members[index]);
+        winner.transfer(contractAddress.balance);
+        members = new address payable[](0);
+
+    }
+
+    function getMembers() public view returns (address[] memory) {
+        return members;
+    }
+}
